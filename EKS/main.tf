@@ -1,4 +1,4 @@
-#Vpc
+# VPC module
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -8,7 +8,6 @@ module "vpc" {
   azs             = data.aws_availability_zones.azs.names
   public_subnets  = var.public_subnets
   private_subnets = var.private_subnets
-
 
   enable_dns_hostnames = true
   enable_nat_gateway   = true
@@ -20,17 +19,14 @@ module "vpc" {
   public_subnet_tags = {
     "kubernetes.io/cluster/my-eks-cluster" = "shared"
     "kubernetes.io/role/elb"               = 1
-
   }
   private_subnet_tags = {
     "kubernetes.io/cluster/my-eks-cluster" = "shared"
     "kubernetes.io/role/private_elb"       = 1
-
   }
 }
 
-#EKS
-
+# EKS module
 module "eks" {
   source                         = "terraform-aws-modules/eks/aws"
   cluster_name                   = "my-eks-cluster"
@@ -47,16 +43,20 @@ module "eks" {
       instance_types = var.instances_types
     }
   }
+
   tags = {
     Environment = "dev"
     Terraform   = "true"
   }
 }
 
+# Data sources for EKS
 data "aws_eks_cluster" "cluster" {
   name = module.eks.cluster_name
+  depends_on = [module.eks]  # Ensures EKS module is created before data lookup
 }
 
 data "aws_eks_cluster_auth" "cluster" {
   name = module.eks.cluster_name
+  depends_on = [module.eks]  # Ensures EKS module is created before data lookup
 }
